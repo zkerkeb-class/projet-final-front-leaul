@@ -12,14 +12,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
-  ScrollView
+  ScrollView,
+  Platform
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-// Remplace par l'adresse IP locale de la machine qui fait tourner l'API
-// Exemple: const API_BASE_URL = 'http://192.168.0.15:4000';
-const API_BASE_URL = 'http://192.168.0.15:4000';
+// Sur le web (navigateur) : l'API est sur la meme machine donc localhost.
+// Sur Expo Go (telephone) : remplace par l'IP locale de ton PC (ex: 192.168.1.x).
+const API_BASE_URL =
+  Platform.OS === 'web'
+    ? 'http://localhost:4000'
+    : 'http://192.168.0.15:4000';
 
 const TrainingContext = createContext(null);
 
