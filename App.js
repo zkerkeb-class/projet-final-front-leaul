@@ -11,19 +11,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   Platform
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-// Sur le web (navigateur) : l'API est sur la meme machine donc localhost.
-// Sur Expo Go (telephone) : remplace par l'IP locale de ton PC (ex: 192.168.1.x).
+// Web : API sur la meme machine. Expo Go : utilise la meme IP que celle affichee par Expo (ex: exp://192.168.1.110:8081).
 const API_BASE_URL =
   Platform.OS === 'web'
     ? 'http://localhost:4000'
-    : 'http://192.168.0.15:4000';
+    : 'http://192.168.1.110:4000';
+const FETCH_TIMEOUT_MS = 10000;
 
 const TrainingContext = createContext(null);
 
@@ -91,14 +91,27 @@ function TrainingScreen() {
     setShowFront(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/alerts/random`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+      const response = await fetch(`${API_BASE_URL}/alerts/random`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
       if (!response.ok) {
         throw new Error('Erreur réseau');
       }
       const data = await response.json();
       setCard(data);
     } catch (e) {
-      setError("Impossible de charger une carte. Vérifie que l'API est en ligne.");
+      const base =
+        e.name === 'AbortError'
+          ? "Délai dépassé. Vérifie que l'API tourne sur ton PC (npm run dev dans le back)."
+          : "Impossible de charger une carte. Vérifie que l'API est en ligne.";
+      const urlHint =
+        Platform.OS !== 'web'
+          ? ` API: ${API_BASE_URL} (même IP que Expo).`
+          : '';
+      setError(base + urlHint);
     } finally {
       setLoading(false);
     }
@@ -353,8 +366,9 @@ const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <TrainingProvider>
-      <NavigationContainer>
+    <SafeAreaProvider>
+      <TrainingProvider>
+        <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
             headerShown: false,
@@ -370,8 +384,9 @@ export default function App() {
           <Tab.Screen name="Erreurs" component={ErrorsScreen} />
           <Tab.Screen name="Profil" component={ProfileScreen} />
         </Tab.Navigator>
-      </NavigationContainer>
-    </TrainingProvider>
+        </NavigationContainer>
+      </TrainingProvider>
+    </SafeAreaProvider>
   );
 }
 
