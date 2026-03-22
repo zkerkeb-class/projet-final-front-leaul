@@ -17,13 +17,8 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import api from '../api/api';
+import api, { getApiBaseUrl } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-// Web : API sur la meme machine. Expo Go : utilise la meme IP que celle affichee par Expo (ex: exp://192.168.1.110:8081).
-const API_BASE_URL =
-  Platform.OS === 'web'
-    ? 'http://localhost:4001'
-    : 'http://192.168.1.110:4001';
 const FETCH_TIMEOUT_MS = 10000;
 
 const TrainingContext = createContext(null);
@@ -156,7 +151,7 @@ function TrainingScreen() {
           : "Impossible de charger une carte. Vérifie que l'API est en ligne ou qu'il y a des cartes pour ce niveau.";
       const urlHint =
         Platform.OS !== 'web'
-          ? ` API: ${API_BASE_URL} (même IP que Expo).`
+          ? ` API: ${getApiBaseUrl()} (même IP que Expo).`
           : '';
       setError(base + urlHint);
     } finally {

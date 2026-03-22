@@ -1,6 +1,22 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import * as storage from '../api/storage';
-import api from '../api/api';
+import api, { getApiBaseUrl } from '../api/api';
+
+function formatAuthError(error, label) {
+  const serverMsg =
+    error.response?.data?.error ||
+    error.response?.data?.details ||
+    error.response?.data?.message;
+  if (serverMsg) return String(serverMsg);
+
+  if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
+    return `Impossible de joindre le serveur (${getApiBaseUrl()}). Lance le back (npm run dev), meme WiFi que le telephone, pare-feu ouvert sur le port.`;
+  }
+  if (error.message) return `${error.message} (${label})`;
+  return label === 'inscription'
+    ? "Erreur lors de l'inscription"
+    : 'Erreur lors de la connexion';
+}
 
 export const AuthContext = createContext();
 
@@ -37,9 +53,9 @@ export const AuthProvider = ({ children }) => {
       setUserEmail(returnedEmail || email);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || 'Erreur lors de la connexion' 
+      return {
+        success: false,
+        error: formatAuthError(error, 'connexion')
       };
     }
   };
@@ -54,9 +70,9 @@ export const AuthProvider = ({ children }) => {
       setUserEmail(returnedEmail || email);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error.response?.data?.error || "Erreur lors de l'inscription" 
+      return {
+        success: false,
+        error: formatAuthError(error, 'inscription')
       };
     }
   };
